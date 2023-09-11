@@ -1,50 +1,11 @@
 import { Elysia, t } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-import { PrismaClient } from "@prisma/client";
-
-const db = new PrismaClient();
+import { getUserById, signupUser } from "./controllers/users";
 
 const app = new Elysia();
 app.use(staticPlugin());
-app.get("/users/:id", async ({ params }) => {
-	try{
-		const {
-			id,
-			name,
-			email,
-			balance,
-			currency
-		} = await db.user.findUniqueOrThrow({
-			where: {
-				id: Number(params.id)
-			}
-		});
-		return {
-			id,
-			name,
-			email,
-			balance: Number(balance),
-			currency
-		};
-	}catch(err){
-		console.log(err);
-		return err;
-	}
-});
-app.post("/users/", async ({ body, request }) => {
-	try{
-		body.devices = request.headers.get("origin") || "";
-		body.password = await Bun.password.hash(body.password);
-		body.balance = Number(body.balance);
-
-		const result = db.user.create({
-			data: body as any
-		});
-		return result;
-	}catch(err){
-		return err;
-	}
-}, {
+app.get("/users/:id", async ({ params }) => getUserById(params));
+app.post("/users/", async ({ body, request }) => signupUser(body, request), {
 	body: t.Object({
 		name: t.String(),
 		email: t.String(),
